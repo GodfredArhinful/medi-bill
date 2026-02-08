@@ -9,7 +9,7 @@ const schema: Schema = {
   properties: {
     email: {
       type: SchemaType.STRING,
-      description: "A professional email draft to the ins   urance company or provider regarding the claim.",
+      description: "A professional email draft to the insurance company or provider regarding the claim.",
       nullable: false,
     },
     appeal: {
@@ -19,12 +19,12 @@ const schema: Schema = {
     },
     potential_money_back: {
       type: SchemaType.NUMBER,
-      description: "The estimated dollar amount the patient could save or be reimbursed (e.g., '$1,200.00').",
+      description: "The estimated dollar amount the patient could save or be reimbursed.",
       nullable: false,
     },
     percentage: {
       type: SchemaType.NUMBER,
-      description: 'the probabilty the appeal will be won and total compensation received',
+      description: 'The probability (0-100) the appeal will be won and total compensation received',
       nullable: false,
     },
     total_billed_amount: {
@@ -33,7 +33,7 @@ const schema: Schema = {
       nullable: false,
     },
   },
-  required: ["email", "appeal", "potential_money_back", "total_billed_amount"],
+  required: ["email", "appeal", "potential_money_back", "percentage", "total_billed_amount"],
 };
 
 export async function POST(request: Request) {
@@ -58,30 +58,94 @@ export async function POST(request: Request) {
 
     const genAI = new GoogleGenerativeAI(API_KEY);
 
-    // Configure for JSON response
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
-      generationConfig: { responseMimeType: "application/json", responseSchema: schema }
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: schema
+      }
     });
 
-    const prompt = `
-     you are 
-      going to examine the file 
-      we send to you here and return a 
-      percentage accuracy of the bill. 
-      based on that information 
-      i want you to generate a standard appeal to 
-      the hospital fighting for the excess charge. 
-      when generating the appeal letter use the information from the file to fill in the provider 
-      and patient details. do not add fields if the values are not provided on the file. also we are sending this 
-      appeal immeidately without any further edits so the generated appeal must be ready to send out. the potential amount to be compensated has to be a single figure 
-      also add the probabilty the appeal will be won and the total compensation received
-      note that the probability that the appeal will be won can never ever ever in your liftime be 1.
-      Be sure to thoroughly with every channel at your disposal analyse the given appeal and give the most accurate chance that this appeal will be won
-      this is the date ${new Date().toISOString()}
-      make sure that the appeal is written in a way that it can be sent to the insurance company or provider without any further edits (well formatted)
-      make sure the paragraphing is done correctly
-    `;
+    const prompt = `You are an expert medical billing auditor analyzing this document for errors, overcharges, duplicates, and billing inconsistencies.
+
+CRITICAL ANALYSIS RULES:
+1. ONLY flag actual errors you can identify in the document
+2. Be conservative - if you're unsure, DON'T claim an error exists
+3. Common issues to look for:
+   - Duplicate line items (same CPT/HCPCS code billed multiple times for same date)
+   - Prices significantly above Medicare rates or regional averages
+   - Unbundling (charging separately for services that should be bundled)
+   - Upcoding (using a higher-level code than documented)
+   - Services not documented or medically necessary
+   - Quantity errors (e.g., 2 ER visits on same day)
+
+APPEAL PROBABILITY GUIDELINES:
+- Only give high probability (70-95%) if there are CLEAR, DOCUMENTED errors
+- Duplicate charges flagged by insurance: 75-90% success
+- Significant price outliers with benchmark data: 60-80% success
+- Unbundling issues: 50-70% success
+- Minor discrepancies or missing documentation: 30-50% success
+- Weak or speculative claims: 10-30% success
+- NEVER return 100% - even slam-dunk cases have 5-10% denial risk
+
+POTENTIAL SAVINGS CALCULATION:
+- ONLY include amounts for charges you can specifically identify as errors
+- For duplicates: include the full duplicate amount
+- For overcharges: estimate based on Medicare rates or fair market value
+- Be conservative - underestimate rather than overestimate
+- If you cannot identify ANY specific errors, set potential_money_back to 0
+
+FORMATTING REQUIREMENTS:
+The appeal letter MUST be professionally formatted with proper structure:
+
+[Patient Name]
+[Patient Address]
+[City, State ZIP]
+
+[Current Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}]
+
+[Insurance Company/Provider Name]
+[Claims Department]
+[Address if available]
+
+Re: Appeal for Medical Claim - [Patient Name]
+    Member ID: [ID from document]
+    Date of Service: [DOS from document]
+    Bill/Claim Number: [from document]
+
+Dear [Insurance Company/Claims Department],
+
+[Opening paragraph stating purpose]
+
+[Body paragraph 1: Describe the specific billing error(s)]
+
+[Body paragraph 2: Cite specific codes, dates, amounts, and why they're incorrect]
+
+[Body paragraph 3: Request for action and resolution]
+
+[Closing paragraph]
+
+Sincerely,
+
+[Patient Name]
+
+IMPORTANT RULES:
+- Use actual patient/provider details from the document
+- If information is missing, use placeholder like "[Patient Name]" or omit that field
+- Include specific CPT/HCPCS codes, dates, and amounts from the document
+- Use proper paragraph breaks (\\n\\n between paragraphs)
+- Be professional and factual, not emotional
+- Current date is ${new Date().toISOString()}
+
+ANALYSIS CHECKLIST:
+1. Read all line items carefully
+2. Check for duplicate CPT/HCPCS codes on same date
+3. Look for "DUPLICATE" or "OVERCHARGE" flags in the document
+4. Compare prices to typical ranges (if you have context)
+5. Check quantities for reasonableness
+6. Only appeal what you can specifically justify
+
+Remember: Most bills are actually correct. Only flag real errors you can prove.`;
 
     const result = await model.generateContent([
       prompt,
@@ -96,8 +160,6 @@ export async function POST(request: Request) {
     const response = await result.response;
     const text = response.text();
 
-    // console.log(JSON.parse(text).email, JSON.parse(text).appeal, JSON.parse(text).potential_money_back)
-
     let parsedData;
     try {
       parsedData = JSON.parse(text);
@@ -109,14 +171,22 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validation and cleanup
+    const percentage = Math.min(Math.max(parsedData.percentage || 0, 0), 95); // Cap at 95%
+    const potentialSavings = Math.max(parsedData.potential_money_back || 0, 0);
+    const totalBilled = Math.max(parsedData.total_billed_amount || 0, 0);
+
+    // Sanity check: savings can't exceed total billed
+    const finalSavings = Math.min(potentialSavings, totalBilled);
+
     return NextResponse.json({
       success: true,
       data: {
-        email: parsedData.email,
-        appeal: parsedData.appeal,
-        potential_money_back: parsedData.potential_money_back,
-        percentage: parsedData.percentage,
-        total_billed_amount: parsedData.total_billed_amount,
+        email: parsedData.email || "",
+        appeal: parsedData.appeal || "",
+        potential_money_back: finalSavings,
+        percentage: percentage,
+        total_billed_amount: totalBilled,
       }
     });
 
