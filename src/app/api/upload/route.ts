@@ -24,7 +24,7 @@ const schema:Schema = {
         },
         percentage: {
           type: SchemaType.NUMBER,
-          description: 'potential money back / inital total amount',
+          description: 'the probabilty the appeal will be won and total compensation received',
           nullable: false,
         },
       },
@@ -70,6 +70,9 @@ export async function POST(request: Request) {
       when generating the appeal letter use the information from the file to fill in the provider 
       and patient details. do not add fields if the values are not provided on the file. also we are sending this 
       appeal immeidately without any further edits so the generated appeal must be ready to send out. the potential amount to be compensated has to be a single figure 
+      also add the probabilty the appeal will be won and the total compensation received
+      note that the probability that the appeal will be won can never ever ever in your liftime be 1.
+      Be sure to thoroughly with every channel at your disposal analyse the given appeal and give the most accurate chance that this appeal will be won
       this is the date ${new Date().toISOString()}
     `;
 
