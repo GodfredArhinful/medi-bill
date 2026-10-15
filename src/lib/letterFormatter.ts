@@ -91,7 +91,7 @@ export function parseAppealLetter(rawText: string): {
  */
 export function formatLetterAsText(rawText: string): string {
     // Basic formatting - add line breaks after common patterns
-    let formatted = rawText
+    const formatted = rawText
         // Add breaks after date patterns
         .replace(/(\d{4})([A-Z])/g, "$1\n\n$2")
         // Add breaks before "Dear"

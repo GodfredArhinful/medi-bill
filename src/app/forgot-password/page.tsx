@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
             <div className="w-full max-w-[400px] animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
                 <div className="text-center mb-8">
                     <h1 className="text-subheadline mb-2">Reset password</h1>
-                    <p className="text-body">We'll send you a link to reset it</p>
+                    <p className="text-body">We&apos;ll send you a link to reset it</p>
                 </div>
 
                 {success ? (
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
                         <div>
                             <h3 className="text-lg font-semibold text-[var(--apple-black)] mb-2">Check your email</h3>
                             <p className="text-body mb-1">
-                                We've sent a reset link to
+                                We&apos;ve sent a reset link to
                             </p>
                             <p className="text-[var(--apple-black)] font-medium">{email}</p>
                         </div>
