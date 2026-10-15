@@ -108,7 +108,7 @@ function HomeContent() {
             priority
           />
           <div className="flex items-center gap-6">
-            <span className="text-sm text-[var(--apple-gray)]">{user?.email}</span>
+            <span className="hidden sm:inline text-sm text-[var(--apple-gray)]">{user?.email}</span>
             <button
               onClick={handleSignOut}
               className="text-sm text-[var(--apple-blue)] hover:underline transition-colors"
