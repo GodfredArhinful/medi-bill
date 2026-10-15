@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   try {
     if (!API_KEY) {
       return NextResponse.json(
-        { error: "Server misconfigured: Missing GEMINI_API_KEY" },
+        { error: "Server misconfigured: Missing GVAPI" },
         { status: 500 }
       );
     }
@@ -176,16 +176,7 @@ Remember: Most bills are actually correct. Only flag real errors you can prove.`
       );
     }
 
-    // AGGRESSIVE validation to fix the percentage issue
-    let percentage = Number(parsedData.percentage) || 0;
-
-    // If it's absurdly high (like 8500), it probably meant 85%
-    if (percentage > 100) {
-      percentage = Math.min(percentage / 100, 90); // Divide by 100 and cap at 90
-    }
-
-    // Clamp between 0 and 90
-    percentage = Math.min(Math.max(percentage, 0), 90);
+    const percentage = Math.min(Math.max(Number(parsedData.percentage) || 0, 0), 95); // Cap at 95%
 
     const potentialSavings = Math.max(Number(parsedData.potential_money_back) || 0, 0);
     const totalBilled = Math.max(Number(parsedData.total_billed_amount) || 0, 0);

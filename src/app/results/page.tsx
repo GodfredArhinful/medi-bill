@@ -180,7 +180,7 @@ export default function ResultsPage() {
                             <div className="xl:sticky xl:top-24">
                                 <ActionPanel
                                     letterElementId="appeal-letter-content"
-                                    emailContent={analysis.appeal}
+                                    emailContent={analysis.email}
                                     emailSubject={`Medical Bill Appeal - ${formatCurrency(potentialSavings)} Potential Recovery`}
                                 />
                             </div>
