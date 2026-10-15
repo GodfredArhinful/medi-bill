@@ -11,7 +11,10 @@ import AppealLetter from "@/components/AppealLetter";
 import { formatCurrency } from "@/lib/formatCurrency";
 
 export default function ResultsPage() {
-    const { analysis } = useAnalysis();
+    const { analysis, loaded } = useAnalysis();
+
+    // Wait for the saved analysis to be read so a refresh doesn't flash the empty state
+    if (!loaded) return null;
 
     // Empty state
     if (!analysis) {

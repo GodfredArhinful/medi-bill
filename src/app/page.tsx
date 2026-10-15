@@ -88,6 +88,7 @@ function HomeContent() {
   const handleSignOut = async () => {
     try {
       await signOut();
+      setAnalysis(null); // don't leave this user's bill in the tab for the next person
       router.push("/login");
     } catch (error) {
       console.error("Sign out error:", error);
