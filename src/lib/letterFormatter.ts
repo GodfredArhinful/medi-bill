@@ -93,7 +93,7 @@ export function formatLetterAsText(rawText: string): string {
     // Basic formatting - add line breaks after common patterns
     let formatted = rawText
         // Add breaks after date patterns
-        .replace(/(\d{4})([A-Z])/g, "$1\n\n$2")
+        .replace(/(\d{1,2},\s*\d{4})([A-Z])/g, "$1\n\n$2")
         // Add breaks before "Dear"
         .replace(/(Dear\s+)/gi, "\n\n$1")
         // Add breaks before "Subject:"
@@ -113,8 +113,8 @@ export function formatLetterAsText(rawText: string): string {
         .replace(/-\s*(Member ID:)/gi, "\n$1")
         .replace(/-\s*(Service Date:)/gi, "\n$1")
         .replace(/-\s*(Bill ID:)/gi, "\n$1")
-        // Add breaks before closing phrases
-        .replace(/(Sincerely|Respectfully|Best regards|Thank you)/gi, "\n\n$1")
+        // Add breaks before closing phrases (capitalized + comma, so "I respectfully request" isn't split)
+        .replace(/(Sincerely|Respectfully|Best regards|Thank you),/g, "\n\n$1,")
         // Add paragraph breaks between sentences that start new topics
         .replace(/\.\s*(I am writing|I request|I expect|Please|Furthermore|Additionally|Moreover)/gi, ".\n\n$1")
         // Clean up multiple newlines

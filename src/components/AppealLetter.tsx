@@ -18,7 +18,7 @@ export default function AppealLetter({ content, id = "appeal-letter" }: AppealLe
         >
             <div className="max-w-2xl mx-auto space-y-5 text-[15px] leading-relaxed text-[var(--apple-black)]">
                 {formattedContent.split("\n\n").map((paragraph, index) => (
-                    <p key={index} className="text-justify">
+                    <p key={index} className="text-justify whitespace-pre-line">
                         {paragraph}
                     </p>
                 ))}
