@@ -9,6 +9,7 @@ import {
     ResponsiveContainer,
     Cell,
     LabelList,
+    type LabelProps,
 } from "recharts";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/formatCurrency";
 
@@ -44,8 +45,8 @@ export default function SpendComparisonChart({
                 <BarChart
                     data={data}
                     layout="vertical"
-                    margin={{ top: 20, right: 100, left: 20, bottom: 20 }}
-                    barSize={40}
+                    margin={{ top: 20, right: 80, left: 12, bottom: 0 }}
+                    barSize={32}
                 >
                     <XAxis
                         type="number"
@@ -54,14 +55,9 @@ export default function SpendComparisonChart({
                         axisLine={{ stroke: "#d2d2d7" }}
                         tickLine={false}
                     />
-                    <YAxis
-                        type="category"
-                        dataKey="name"
-                        tick={{ fill: "#1d1d1f", fontSize: 14, fontWeight: 500 }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={180}
-                    />
+                    {/* Names are drawn above the bars (see BarName) instead of in a 180px axis column,
+                        which left no room for the bars on phones */}
+                    <YAxis type="category" dataKey="name" hide />
                     <Tooltip
                         formatter={(value) => formatCurrency(value as number)}
                         contentStyle={{
@@ -77,6 +73,7 @@ export default function SpendComparisonChart({
                         {data.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
+                        <LabelList dataKey="name" content={BarName} />
                         <LabelList
                             dataKey="amount"
                             position="right"
@@ -87,5 +84,14 @@ export default function SpendComparisonChart({
                 </BarChart>
             </ResponsiveContainer>
         </div>
+    );
+}
+
+// Draws a bar's name just above the start of the bar
+function BarName({ x, y, value }: LabelProps) {
+    return (
+        <text x={Number(x)} y={Number(y) - 8} fill="#1d1d1f" fontSize={14} fontWeight={500}>
+            {value}
+        </text>
     );
 }
